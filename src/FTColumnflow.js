@@ -70,7 +70,8 @@ var FTColumnflow = (function () {
 			minFixedPadding:          1,
 			lineHeight:               null,
 			noWrapOnTags:             [],
-			allowReflow:              true
+			allowReflow:              true,
+			forceColumnWidth:         false
 		},
 
 		// CSS Style declarations
@@ -291,6 +292,10 @@ var FTColumnflow = (function () {
 
 			config.layoutDimensions = {};
 
+			if (config.forceColumnWidth) {
+				config.viewportWidth = ((config.columnWidth+config.columnGap)*3);
+			}
+
 			// Determine viewport dimensions if they have not been specified
 			if (!config.viewportWidth) {
 				computedStyle = window.getComputedStyle(that.viewport);
@@ -343,21 +348,27 @@ var FTColumnflow = (function () {
 			// Column width is specified.
 			} else {
 
-				// Derive the optimal column count
-				// COMPLEX:GC:20120312: Add 1px to the page width to avoid precision errors in the case that the config values
-				// result in a column count very near to a whole number
-				derivedColumnCount = Math.max(1, Math.floor((config.layoutDimensions.pageInnerWidth + 1 + config.layoutDimensions.columnGap) / (config.columnWidth + config.layoutDimensions.columnGap)));
-
-				if ('auto' === config.columnCount) {
-
-					// Use the derived count
-					config.layoutDimensions.columnCount = derivedColumnCount;
-					config.layoutDimensions.columnWidth = ((config.layoutDimensions.pageInnerWidth + config.layoutDimensions.columnGap) / config.layoutDimensions.columnCount) - config.layoutDimensions.columnGap;
+				if (config.forceColumnWidth) {
+					config.layoutDimensions.columnCount = 3;
+					config.layoutDimensions.columnWidth = config.columnWidth;
 				} else {
 
-					// Count is specified, but we may be able to fit more
-					config.layoutDimensions.columnCount = Math.min(config.columnCount, derivedColumnCount);
-					config.layoutDimensions.columnWidth = ((config.layoutDimensions.pageInnerWidth + config.layoutDimensions.columnGap) / config.layoutDimensions.columnCount) - config.layoutDimensions.columnGap;
+					// Derive the optimal column count
+					// COMPLEX:GC:20120312: Add 1px to the page width to avoid precision errors in the case that the config values
+					// result in a column count very near to a whole number
+					derivedColumnCount = Math.max(1, Math.floor((config.layoutDimensions.pageInnerWidth + 1 + config.layoutDimensions.columnGap) / (config.columnWidth + config.layoutDimensions.columnGap)));
+
+					if ('auto' === config.columnCount) {
+
+						// Use the derived count
+						config.layoutDimensions.columnCount = derivedColumnCount;
+						config.layoutDimensions.columnWidth = ((config.layoutDimensions.pageInnerWidth + config.layoutDimensions.columnGap) / config.layoutDimensions.columnCount) - config.layoutDimensions.columnGap;
+					} else {
+
+						// Count is specified, but we may be able to fit more
+						config.layoutDimensions.columnCount = Math.min(config.columnCount, derivedColumnCount);
+						config.layoutDimensions.columnWidth = ((config.layoutDimensions.pageInnerWidth + config.layoutDimensions.columnGap) / config.layoutDimensions.columnCount) - config.layoutDimensions.columnGap;
+					}
 				}
 			}
 		}
