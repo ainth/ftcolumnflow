@@ -1227,7 +1227,7 @@ var FTColumnflow = (function () {
 
 		function _renderFlowedContent() {
 
-			var outputHTML = '', indexedPageNum, page_len, pageHTML, page, i, l, element, indexedColumnNum,
+			var outputHTML = '', emptyEndColumns = 0, deadSpace = 0, indexedPageNum, page_len, pageHTML, page, i, l, element, indexedColumnNum,
 				column_len, column, indexedColumnFrag, fragLen, el, fragment;
 
 			for (indexedPageNum = 0, page_len = pagedContent.length; indexedPageNum < page_len; indexedPageNum++) {
@@ -1289,14 +1289,17 @@ var FTColumnflow = (function () {
 					continue;
 				}
 
+				if (indexedPageNum === pagedContent.length-1) {
+					emptyEndColumns = _emptyEndColumns(page.columns);
+					deadSpace 		= emptyEndColumns * config.layoutDimensions.columnWidth;
+				}
 				// Add the page contents to the HTML string
-				outputHTML += _openPage(indexedPageNum) + pageHTML + '</div>';
+				outputHTML += _openPage(indexedPageNum, deadSpace) + pageHTML + '</div>';
 			}
 
 			renderArea.innerHTML = outputHTML;
-
 			// Set an explicit width on the target - not necessary but will allow adjacent content to flow around the flowed columns normally
-			that.target.style.width = (config.viewportWidth * page_len) + 'px';
+			that.target.style.width = ((config.viewportWidth * page_len) - deadSpace) + 'px';
 
 			// Update the instance page counter
 			that.pagedContentCount = pagedContent.length;
@@ -1304,6 +1307,22 @@ var FTColumnflow = (function () {
 
 
 		/* Private methods */
+
+		function _emptyEndColumns(columns) {
+			if (columns.length === 0) return 0;
+			var emptyCount = 0;
+			for (var i=columns.length-1;i>=0;i--) {
+				if (_columnIsEmpty(columns[i])) {
+					emptyCount++;
+				}
+			}	
+			return emptyCount;
+		}
+
+		function _columnIsEmpty(column) {
+			if (!column.fragments) return true;
+			return column.fragments[0].elements.length === 0;
+		}
 
 		function _addClass(element, className) {
 
@@ -1440,11 +1459,15 @@ var FTColumnflow = (function () {
 		}
 
 
-		function _openPage(indexedPageNum) {
+		function _openPage(indexedPageNum, deadSpace) {
 			var pagePos;
 
 			if ('horizontal' === config.pageArrangement) {
 				pagePos = 'left: ' + (indexedPageNum * config.viewportWidth) + 'px;';
+				if (deadSpace > 0) {
+					console.log(config.viewportWidth - deadSpace);
+					pagePos += 'width: ' + (config.viewportWidth - deadSpace) + 'px;';
+				}
 			} else {
 				pagePos = 'top: ' + (indexedPageNum * config.viewportHeight) + 'px;';
 			}
